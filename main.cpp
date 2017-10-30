@@ -20,23 +20,41 @@ const int encode_buffer_addr = 0x0046C00C;
 const int encode_str_addr = 0x0046F3CF;
 
 dll_func void encode1() {
-	printf("byte\n");
+	int p = 3;
+	void* ptr = &p + 14;
+	unsigned int decval = *(unsigned int*)ptr;
+	printf("byte: %02X, %d ", decval, decval);
 }
 
 dll_func void encode2() {
-	printf("short\n");
+	int p = 3;
+	void* ptr = &p + 14;
+	unsigned int decval = *(unsigned int*)ptr;
+	printf("short: %04X, %d ", decval, decval);
 }
 
 dll_func void encode4() {
-	printf("int\n");
+	int p = 3;
+	void* ptr = &p + 14;
+	int decval = *(int*)ptr;
+	printf("int: %08X, %d ", decval, decval);
 }
 
 dll_func void encode_string() {
-	printf("string\n");
+	int p = 3;
+	void* ptr = &p + 14;
+	char* strval = *(char**)ptr;
+	printf("str at %p: [%s] ", strval, strval);
 }
 
 dll_func void encode_buffer() {
-	printf("buffer\n");
+	int p = 3;
+	void* ptrlen = &p + 15;
+	void* ptrbuff = &p + 14;
+	int bufflen = *(int*)ptrlen;
+	unsigned char* buffer = *(unsigned char**)ptrbuff;
+
+	printf("buffer size %d ", bufflen);
 }
 
 dll_func void packet_sent() {
