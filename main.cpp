@@ -69,7 +69,6 @@ void open_console() {
 	printf("Debugging Window:\n");
 }
 
-
 bool launchDebugger() {
 	// Get System directory, typically c:\windows\system32
 	std::wstring systemDir(MAX_PATH + 1, '\0');
