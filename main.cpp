@@ -5,10 +5,13 @@
 #define dll_func extern_c dll_export
 
 #include <iostream>
+#include <algorithm>
 #include <iosfwd>
+#include <map>
 
 #include <windows.h>
 #include "hook.h"
+#include "packet.h"
 
 const int send_packet_addr = 0x0049637B;
 const int encode1_addr = 0x00406549;
@@ -17,32 +20,62 @@ const int encode4_addr = 0x004065A6;
 const int encode_buffer_addr = 0x0046C00C;
 const int encode_str_addr = 0x0046F3CF;
 
+std::map<void*, packet> active_packets;
+
+void print_stack(int* start) {
+	for (int i = 0; i < 15; i++) {
+		printf("%p\n", *(start + i));
+	}
+	printf("\n");
+}
+
 dll_func void encode1() {
 	int p = 3;
-	void* ptr = &p + 14;
-	unsigned int decval = *(unsigned int*)ptr;
-	printf("byte: %02X, %d ", decval, decval);
+
+	void* val_ptr = &p + 14;
+	unsigned int decval = *(unsigned int*)val_ptr;
+
+	void* this_ptr = &p + 5;
+	void* this_val = *(void**)this_ptr;
+
+	active_packets[this_val].add_data(new packet_data_byte(decval));
+	//printf("byte: %02X, %d ", decval, decval);
 }
 
 dll_func void encode2() {
 	int p = 3;
 	void* ptr = &p + 14;
 	unsigned int decval = *(unsigned int*)ptr;
-	printf("short: %04X, %d ", decval, decval);
+
+	void* this_ptr = &p + 5;
+	void* this_val = *(void**)this_ptr;
+
+	active_packets[this_val].add_data(new packet_data_short(decval));
+	//printf("short: %04X, %d ", decval, decval);
 }
 
 dll_func void encode4() {
 	int p = 3;
 	void* ptr = &p + 14;
 	int decval = *(int*)ptr;
-	printf("int: %08X, %d ", decval, decval);
+
+	void* this_ptr = &p + 5;
+	void* this_val = *(void**)this_ptr;
+
+	active_packets[this_val].add_data(new packet_data_int(decval));
+	//printf("int: %08X, %d ", decval, decval);
 }
 
 dll_func void encode_string() {
 	int p = 3;
 	void* ptr = &p + 14;
 	char* strval = *(char**)ptr;
-	printf("str at %p: [%s] ", strval, strval);
+
+	void* this_ptr = &p + 5;
+	void* this_val = *(void**)this_ptr;
+
+	active_packets[this_val].add_data(new packet_data_string(strval));
+	//printf("str at %p: [%s] ", strval, strval);
 }
 
 dll_func void encode_buffer() {
@@ -52,10 +85,38 @@ dll_func void encode_buffer() {
 	int bufflen = *(int*)ptrlen;
 	unsigned char* buffer = *(unsigned char**)ptrbuff;
 
-	printf("buffer size %d ", bufflen);
+	void* this_ptr = &p + 5;
+	void* this_val = *(void**)this_ptr;
+
+	active_packets[this_val].add_data(new packet_data_buffer(buffer, bufflen));
+	//printf("buffer size %d ", bufflen);
 }
 
 dll_func void packet_sent() {
+	int p = 3;
+
+	void* this_ptr = &p + 5;
+	void* this_val = *(void**)this_ptr;
+
+	printf("packet_sent\n");
+
+	active_packets.at(this_val).print();
+	active_packets.erase(active_packets.find(this_val));
+	/*
+	for (int i = 0; i < 20; i++) {
+		void* packet_ptr = &p + 3 + i;
+		void* packet_val = *(void**)this_ptr;
+
+		if (active_packets.find(packet_val) != active_packets.end()) {
+			active_packets.at(this_val).print();
+			active_packets.erase(active_packets.find(this_val));
+
+			printf("index at p+%d", 3 + i);
+			break;
+		}
+	}
+	*/
+	
 	printf("packet sent\n");
 }
 
